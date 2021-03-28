@@ -1,8 +1,11 @@
 use std::{collections::HashSet, io::stdin};
 
 use solver::AnagramSolver;
+use trie::Trie;
 
 mod solver;
+mod trie;
+
 // Expose Config to get it in main.rs
 pub struct Config {
     filename: String,

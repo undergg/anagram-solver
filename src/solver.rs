@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use super::trie::Trie;
 
 pub trait AnagramSolver {
     fn find_all_anagrams(&self, ch: &str) -> HashSet<String>;
@@ -61,6 +62,13 @@ fn find_all_anagrams_recurse(
             used.insert(i, false);
             char_combination.pop();
         }
+    }
+}
+
+impl AnagramSolver for Trie {
+
+    fn find_all_anagrams(&self, ch : &str) -> HashSet<String> {
+        todo!();
     }
 }
 
