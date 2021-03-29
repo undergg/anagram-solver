@@ -1,78 +1,82 @@
-use std::{collections::{HashMap, HashSet}, str::Chars};
+use std::{
+    collections::{HashMap, HashSet},
+    str::Chars,
+};
+
+use crate::solver::AnagramSolver;
 
 // Implementation of Trie in rust. (aka Prefix tree)
 pub struct Trie {
-    root : TrieNode,
-    size : i32
+    root: TrieNode,
+    size: i32,
 }
 
 // For simplicity let's start with char as our way to navigate the trie.
-// TODO: We can make it generic and conditionally generic on traits that 
+// TODO: We can make it generic and conditionally generic on traits that
 // are iterable. (e.g String, Vec etc.)
-// We could also create another trait to make things more specific.
 struct TrieNode {
-    // If this is true then 
-    value : bool,
-    edges : HashMap<char, TrieNode>
+    // If this is true then
+    value: bool,
+    edges: HashMap<char, TrieNode>,
 }
 
 impl TrieNode {
-    
     pub fn new() -> TrieNode {
-        TrieNode{value: false, edges: HashMap::new()}
+        TrieNode {
+            value: false,
+            edges: HashMap::new(),
+        }
     }
 }
 
 impl Trie {
-
     pub fn new() -> Trie {
         Trie {
             root: TrieNode {
                 // We want root to be false, since it's an artificial node.
                 value: false,
-                edges: HashMap::new()
+                edges: HashMap::new(),
             },
-            size : 0
+            size: 0,
         }
     }
-    
-    pub fn insert(&mut self, item : &str) {
+
+    pub fn insert(&mut self, item: &str) {
         insert_helper(&mut self.root, &mut item.chars());
-        
+
         // Increase trie's size.
         self.size += 1;
     }
 
     // We could return bool here, or Result. Let's revisit.
-    pub fn delete(&mut self, item : &str) {
+    pub fn delete(&mut self, item: &str) {
         let mut delete_node = true;
         if delete_helper(&mut self.root, &mut item.chars(), &mut delete_node) {
             self.size -= 1;
         }
     }
 
-    pub fn contains(&self, item : &str) -> bool {
+    pub fn contains(&self, item: &str) -> bool {
         contains_helper(&self.root, &mut item.chars())
     }
 }
 
 // Helper for Trie insert.
 // node is the current node we are visiting in the tree.
-fn insert_helper(node : &mut TrieNode, c_iter : &mut Chars) {
-   
+fn insert_helper(node: &mut TrieNode, c_iter: &mut Chars) {
     // Check if we are the end of the string.
     let ch = match c_iter.next() {
         Some(c) => c,
         None => {
             // We are at the end of the word.
             node.value = true;
-            return
+            return;
         }
     };
 
     // Create or get next node.
     // We need a mutable reference because we may change it in a later call in the recursion.
-    let next_node : &mut TrieNode = match node.edges.get_mut(&ch) {
+    let next_node: &mut TrieNode = match node.edges.get_mut(&ch) {
         Some(n) => n,
         None => {
             let new_node = TrieNode::new();
@@ -91,9 +95,9 @@ fn insert_helper(node : &mut TrieNode, c_iter : &mut Chars) {
 // delete_node -> whether we also delete the nodes as we go.
 // Set it to true if you want to delete nodes when removing a word. (Recommended)
 // Returns true is the word was deleted, false if the word didn't exist and thus not deleted.
-fn delete_helper(node : &mut TrieNode, c_iter : &mut Chars, delete_node : &mut bool) -> bool {
-    let ch : Option<char>;
-    let ret : bool;
+fn delete_helper(node: &mut TrieNode, c_iter: &mut Chars, delete_node: &mut bool) -> bool {
+    let ch: Option<char>;
+    let ret: bool;
 
     // Traverse the Trie, reach the end.
     match c_iter.next() {
@@ -101,18 +105,18 @@ fn delete_helper(node : &mut TrieNode, c_iter : &mut Chars, delete_node : &mut b
             // We will need it after traversing.
             ch = Some(c);
             // Go to the next node.
-            let next_node : &mut TrieNode = match node.edges.get_mut(&c) {
+            let next_node: &mut TrieNode = match node.edges.get_mut(&c) {
                 Some(n) => n,
                 None => {
-                    // We could return an error. For the moment let's prevent deleting 
+                    // We could return an error. For the moment let's prevent deleting
                     // any nodes by mistake.
                     *delete_node = false;
-                    return false
+                    return false;
                 }
             };
-            
+
             ret = delete_helper(next_node, c_iter, delete_node)
-        },
+        }
         None => {
             // We are at the end of the word.
             node.value = false;
@@ -129,7 +133,7 @@ fn delete_helper(node : &mut TrieNode, c_iter : &mut Chars, delete_node : &mut b
         *delete_node = false;
     }
 
-    // 
+    //
     if *delete_node {
         match ch {
             Some(c) => {
@@ -143,21 +147,76 @@ fn delete_helper(node : &mut TrieNode, c_iter : &mut Chars, delete_node : &mut b
     ret
 }
 
-fn contains_helper(node : &TrieNode, c_iter : &mut Chars) -> bool {
-    
+fn contains_helper(node: &TrieNode, c_iter: &mut Chars) -> bool {
     let ch = match c_iter.next() {
         Some(c) => c,
-        None => return true
+        None => return true,
     };
 
     // Create or get next node.
     // We need a mutable reference because we may change it in a later call in the recursion.
-    let next_node : &TrieNode = match node.edges.get(&ch) {
+    let next_node: &TrieNode = match node.edges.get(&ch) {
         Some(n) => n,
-        None => return false
+        None => return false,
     };
 
     return contains_helper(next_node, c_iter);
+}
+
+impl AnagramSolver for Trie {
+    fn find_all_anagrams(&self, ch: &str) -> HashSet<String> {
+        let mut curr: String = String::from("");
+        let mut anagrams: HashSet<String> = HashSet::new();
+
+        // HashMap with all indices of input.
+        let mut used: HashMap<usize, bool> = HashMap::new();
+
+        for i in 0..ch.len() {
+            used.insert(i, false);
+        }
+
+        find_all_anagrams_helper(&self.root, &mut curr, ch, &mut used, &mut anagrams);
+        anagrams
+    }
+}
+
+// node -> the current trie node we are visiting.
+// curr -> the current string represented by the current node. (Also the one we hopefully add to the list.)
+// ch -> the set of characters we want to find anagrams for
+// anagrams -> the list of anagrams we construct as we go down the tree.
+fn find_all_anagrams_helper(
+    node: &TrieNode,
+    curr: &mut String,
+    ch: &str,
+    used: &mut HashMap<usize, bool>,
+    anagrams: &mut HashSet<String>,
+) {
+    // We found an anagram. 
+    if node.value {
+        anagrams.insert(curr.clone());
+    }
+    
+    let characters: Vec<char> = ch.chars().collect();
+
+    // Try adding one character.
+    for i in 0..characters.len() {
+        // If we haven't used this character yet then let's go ahead and do that.
+        if !used[&i] && node.edges.contains_key(&characters[i]){
+
+            let next_node : &TrieNode = node.edges.get(&characters[i]).unwrap();
+            
+            // Push character.
+            curr.push(characters[i]);
+            // Mark character as used.
+            used.insert(i, true);
+
+            find_all_anagrams_helper(next_node, curr, ch, used, anagrams);
+
+            // Undo previous changes.
+            used.insert(i, false);
+            curr.pop();
+        }
+    }
 }
 
 #[cfg(test)]
@@ -166,8 +225,8 @@ mod tests {
 
     #[test]
     fn test_trie_add_contains() {
-        let mut trie : Trie = Trie::new(); 
-        
+        let mut trie: Trie = Trie::new();
+
         trie.insert("item");
         trie.insert("meti");
 
@@ -179,7 +238,7 @@ mod tests {
 
     #[test]
     fn test_trie_delete() {
-        let mut trie : Trie = Trie::new();
+        let mut trie: Trie = Trie::new();
 
         trie.insert("item");
         trie.insert("meti");
@@ -193,7 +252,7 @@ mod tests {
 
     #[test]
     fn test_trie_delete_word_does_not_exist() {
-        let mut trie : Trie = Trie::new();
+        let mut trie: Trie = Trie::new();
 
         trie.insert("item");
         trie.insert("meti");
@@ -201,5 +260,27 @@ mod tests {
         trie.delete("word");
 
         assert_eq!(trie.size, 2);
+    }
+
+    #[test]
+    fn test_trie_find_anagrams() {
+        let mut trie : Trie = Trie::new();
+
+        trie.insert("anagram");
+        trie.insert("one");
+        trie.insert("two");
+        trie.insert("ten");
+
+        let anagrams = trie.find_all_anagrams("otwen");
+
+        assert_eq!(anagrams.len(), 3);
+        assert_eq!(anagrams.contains("one"), true);
+        assert_eq!(anagrams.contains("two"), true);
+        assert_eq!(anagrams.contains("ten"), true);
+        assert_eq!(anagrams.contains("anagram"), false);
+
+        let anagrams = trie.find_all_anagrams("");
+
+        assert_eq!(anagrams.len(), 0);
     }
 }

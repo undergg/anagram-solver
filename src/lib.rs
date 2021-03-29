@@ -66,7 +66,7 @@ impl Config {
 }
 
 // Reads the contents of the dictionary and returns a list of all the words.
-pub fn extract_words(file_contents: &str) -> HashSet<&str> {
+fn extract_words(file_contents: &str) -> HashSet<&str> {
     let mut words: HashSet<&str> = HashSet::new();
 
     for line in file_contents.lines() {
@@ -90,7 +90,7 @@ pub fn run(config: Config) {
 
     loop {
         println!("Pass a set of characters that you want to find anagram words for..");
-        
+
         let mut characters: String = String::new();
 
         stdin()
