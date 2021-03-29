@@ -66,8 +66,8 @@ impl Config {
 }
 
 // Reads the contents of the dictionary and returns a list of all the words.
-fn extract_words(file_contents: &str) -> HashSet<&str> {
-    let mut words: HashSet<&str> = HashSet::new();
+fn extract_words(file_contents: &str) -> Trie {
+    let mut words: Trie = Trie::new();
 
     for line in file_contents.lines() {
         let space_separated_words: Vec<&str> = line.split(' ').collect();
@@ -86,7 +86,7 @@ pub fn run(config: Config) {
         std::fs::read_to_string(config.filename).expect("Failed to read file contents");
 
     // Borrow file_contents to the extract_words function.
-    let dictionary: HashSet<&str> = extract_words(&file_contents);
+    let dictionary= extract_words(&file_contents);
 
     loop {
         println!("Pass a set of characters that you want to find anagram words for..");
@@ -105,6 +105,7 @@ pub fn run(config: Config) {
                 for key in anagrams.iter() {
                     println!("Anagram found:{}", key);
                 }
+                println!("Total found: {}", anagrams.len());
             }
         }
     }

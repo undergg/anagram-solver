@@ -168,14 +168,19 @@ impl AnagramSolver for Trie {
         let mut curr: String = String::from("");
         let mut anagrams: HashSet<String> = HashSet::new();
 
-        // HashMap with all indices of input.
-        let mut used: HashMap<usize, bool> = HashMap::new();
+        // HashMap with all occurrences per character. 
+        let mut oc: HashMap<char, i32> = HashMap::new();
 
-        for i in 0..ch.len() {
-            used.insert(i, false);
+        for c in ch.chars() {
+            if !oc.contains_key(&c) {
+                oc.insert(c, 1);
+            }
+            else {
+                oc.insert(c, oc[&c] + 1);
+            }
         }
 
-        find_all_anagrams_helper(&self.root, &mut curr, ch, &mut used, &mut anagrams);
+        find_all_anagrams_helper(&self.root, &mut curr, ch, &mut oc, &mut anagrams);
         anagrams
     }
 }
@@ -183,37 +188,36 @@ impl AnagramSolver for Trie {
 // node -> the current trie node we are visiting.
 // curr -> the current string represented by the current node. (Also the one we hopefully add to the list.)
 // ch -> the set of characters we want to find anagrams for
+// oc -> how many times can we take character c?
 // anagrams -> the list of anagrams we construct as we go down the tree.
 fn find_all_anagrams_helper(
     node: &TrieNode,
     curr: &mut String,
     ch: &str,
-    used: &mut HashMap<usize, bool>,
+    oc: &mut HashMap<char, i32>,
     anagrams: &mut HashSet<String>,
 ) {
     // We found an anagram. 
     if node.value {
         anagrams.insert(curr.clone());
     }
-    
-    let characters: Vec<char> = ch.chars().collect();
 
     // Try adding one character.
-    for i in 0..characters.len() {
+    for c in ch.chars() {
         // If we haven't used this character yet then let's go ahead and do that.
-        if !used[&i] && node.edges.contains_key(&characters[i]){
+        if oc[&c] >= 1 && node.edges.contains_key(&c) {
 
-            let next_node : &TrieNode = node.edges.get(&characters[i]).unwrap();
+            let next_node : &TrieNode = node.edges.get(&c).unwrap();
             
             // Push character.
-            curr.push(characters[i]);
-            // Mark character as used.
-            used.insert(i, true);
+            curr.push(c);
+            // Reduce available characters c by 1. 
+            oc.insert(c, oc[&c] - 1);
 
-            find_all_anagrams_helper(next_node, curr, ch, used, anagrams);
+            find_all_anagrams_helper(next_node, curr, ch, oc, anagrams);
 
             // Undo previous changes.
-            used.insert(i, false);
+            oc.insert(c, oc[&c] + 1);
             curr.pop();
         }
     }
