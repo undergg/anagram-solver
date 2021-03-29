@@ -197,27 +197,27 @@ fn find_all_anagrams_helper(
     oc: &mut HashMap<char, i32>,
     anagrams: &mut HashSet<String>,
 ) {
+    println!("We are at current word: {}",curr);
+    
     // We found an anagram. 
     if node.value {
         anagrams.insert(curr.clone());
     }
 
-    // Try adding one character.
-    for c in ch.chars() {
+    // Iterate through the tree.
+    for (c, next_node) in node.edges.iter() {
+
         // If we haven't used this character yet then let's go ahead and do that.
-        if oc[&c] >= 1 && node.edges.contains_key(&c) {
-
-            let next_node : &TrieNode = node.edges.get(&c).unwrap();
-            
+        if oc.contains_key(c) && oc[c] >= 1 {
             // Push character.
-            curr.push(c);
+            curr.push(*c);
             // Reduce available characters c by 1. 
-            oc.insert(c, oc[&c] - 1);
+            oc.insert(*c, oc[c] - 1);
 
-            find_all_anagrams_helper(next_node, curr, ch, oc, anagrams);
+            find_all_anagrams_helper(&next_node, curr, ch, oc, anagrams);
 
             // Undo previous changes.
-            oc.insert(c, oc[&c] + 1);
+            oc.insert(*c, oc[c] + 1);
             curr.pop();
         }
     }
