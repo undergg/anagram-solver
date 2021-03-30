@@ -66,13 +66,13 @@ impl Config {
 }
 
 // Reads the contents of the dictionary and returns a list of all the words.
-fn extract_words(file_contents: &str) -> Trie {
-    let mut words: Trie = Trie::new();
+fn extract_words(file_contents: &str) -> Vec<&str> {
+    let mut words: Vec<&str> = Vec::new();
 
     for line in file_contents.lines() {
         let space_separated_words: Vec<&str> = line.split(' ').collect();
         for word in space_separated_words {
-            words.insert(word);
+            words.push(word);
         }
     }
 
@@ -88,6 +88,17 @@ pub fn run(config: Config) {
     // Borrow file_contents to the extract_words function.
     let dictionary= extract_words(&file_contents);
 
+    let mut solver : Box<dyn AnagramSolver> = match config.mode {
+        Mode::Fast => {
+            Box::new(Trie::new())
+        },
+        Mode::Slow => {
+            Box::new(HashSet::new())
+        }
+    };
+
+    solver.add_dictionary(&dictionary);
+
     loop {
         println!("Pass a set of characters that you want to find anagram words for..");
 
@@ -97,7 +108,7 @@ pub fn run(config: Config) {
             .read_line(&mut characters)
             .expect("Failed to read string.");
 
-        let anagrams = dictionary.find_all_anagrams(characters.as_str());
+        let anagrams = solver.find_all_anagrams(characters.as_str());
 
         match anagrams.len() {
             0 => println!("No anagrams found!"),

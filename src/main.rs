@@ -9,6 +9,5 @@ fn main() {
 
     let config = Config::new(&args);
 
-    // TODO: Deal with error handling here.
     anagram_solver::run(config);
 }

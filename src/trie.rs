@@ -163,7 +163,7 @@ fn contains_helper(node: &TrieNode, c_iter: &mut Chars) -> bool {
     return contains_helper(next_node, c_iter);
 }
 
-impl AnagramSolver for Trie {
+impl<'a> AnagramSolver<'a> for Trie {
     fn find_all_anagrams(&self, ch: &str) -> HashSet<String> {
         let mut curr: String = String::from("");
         let mut anagrams: HashSet<String> = HashSet::new();
@@ -183,6 +183,12 @@ impl AnagramSolver for Trie {
         find_all_anagrams_helper(&self.root, &mut curr, ch, &mut oc, &mut anagrams);
         anagrams
     }
+
+    fn add_dictionary(&mut self, dictionary : &'a Vec<&str>) {
+        for word in dictionary {
+            self.insert(word);
+        }
+    }
 }
 
 // node -> the current trie node we are visiting.
@@ -196,9 +202,7 @@ fn find_all_anagrams_helper(
     ch: &str,
     oc: &mut HashMap<char, i32>,
     anagrams: &mut HashSet<String>,
-) {
-    println!("We are at current word: {}",curr);
-    
+) {   
     // We found an anagram. 
     if node.value {
         anagrams.insert(curr.clone());

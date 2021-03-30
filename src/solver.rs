@@ -1,12 +1,13 @@
 use super::trie::Trie;
-use std::collections::{HashMap, HashSet};
+use std::{collections::{HashMap, HashSet}, todo};
 
-pub trait AnagramSolver {
+pub trait AnagramSolver<'a> {
     fn find_all_anagrams(&self, ch: &str) -> HashSet<String>;
+    fn add_dictionary(&mut self, dictionary : &'a Vec<&str>);
 }
 
 // Implement the AnagramSolver for the HashSet. (Explicit for str).
-impl AnagramSolver for HashSet<&str> {
+impl<'a> AnagramSolver<'a> for HashSet<&'a str> {
     fn find_all_anagrams(&self, ch: &str) -> HashSet<String> {
         let mut anagrams: HashSet<String> = HashSet::new();
 
@@ -24,6 +25,13 @@ impl AnagramSolver for HashSet<&str> {
 
         anagrams
     }
+
+    fn add_dictionary(&mut self, dictionary : &'a Vec<&str>) {
+        for word in dictionary {
+            self.insert(word);
+        }
+    }
+
 }
 
 // dict -> the current dictionary.
